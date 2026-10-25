@@ -24,6 +24,18 @@ There is no listings feed. Instead:
 
 Facebook Marketplace and Craigslist cannot be fetched by a bot. The app generates nothing from them directly; the user pastes the listing text or a screenshot and the AI parses it.
 
+## Live demo on GitHub Pages
+
+The `docs/` folder is a static build of the app that runs entirely in the browser: budget search, listing grader, financing math and the buyer's guide, with no server and no API key. The AI features (chat assistant, paste-a-listing parser, live research) need the Python backend below.
+
+`docs/engine.js` is a line-for-line port of `app/services/{finance,seed,deal}.py`, and `tests/test_static_parity.py` checks that both produce identical numbers. `docs/data/` must be a copy of `data/`; the test fails if they drift. After editing the seed or rates files:
+
+```bash
+cp data/seed_cars.json data/rates.json docs/data/
+```
+
+To publish: repository Settings → Pages → Source "Deploy from a branch", branch `main`, folder `/docs`. The site appears at `https://<user>.github.io/carscout/`.
+
 ## Run it
 
 ```bash
@@ -63,11 +75,12 @@ app/
 data/
   seed_cars.json       the model table (generated from scripts/_seed_source.py)
   rates.json           APRs, insurance tiers, channel multipliers, mileage and title adjustments
-frontend/              single-page UI, vanilla JS, no build step
+frontend/              single-page UI for the full app, vanilla JS, no build step
+docs/                  static GitHub Pages build (engine.js port + copied data), no AI
 scripts/
   _seed_source.py      compact hand-maintained source for seed_cars.json
   build_seed.py        research a model with the agent and add/refresh it in the seed table
-tests/                 28+ tests covering finance math, seed search, grading, API, agent loop
+tests/                 33 tests covering finance math, seed search, grading, API, agent loop
 ```
 
 ## API

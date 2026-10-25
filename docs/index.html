@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CarScout</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">🚗</span> CarScout <span class="tag">used-car research for first-time buyers</span></div>
+  <div id="status" class="status">loading…</div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="budget">1 · Budget search</button>
+  <button class="tab" data-tab="grade">2 · Grade a listing</button>
+    <button class="tab" data-tab="guide">3 · Buyer's guide</button>
+</nav>
+
+<main>
+<!-- BUDGET -->
+<section id="tab-budget" class="panel active">
+  <form id="budget-form" class="card form-grid">
+    <h2>What can you afford each month?</h2>
+    <label>Monthly car payment ($)<input name="monthly_payment" type="number" value="350" min="50" step="10" required></label>
+    <label>Down payment ($)<input name="down_payment" type="number" value="2000" min="0" step="100"></label>
+    <label>Loan length<select name="term_months"><option>36</option><option>48</option><option selected>60</option><option>72</option></select></label>
+    <label>Credit<select name="credit_tier">
+      <option value="super_prime">Excellent (781+)</option><option value="prime" selected>Good (661-780)</option>
+      <option value="nonprime">Fair (601-660)</option><option value="subprime">Poor (501-600)</option><option value="deep_subprime">Very poor (&lt;500)</option></select></label>
+    <label>Driver age<input name="driver_age" type="number" value="30" min="16" max="99"></label>
+    <label>Body type<select name="body_types" multiple size="4">
+      <option value="sedan">Sedan</option><option value="hatchback">Hatchback</option><option value="suv">SUV</option>
+      <option value="truck">Truck</option><option value="minivan">Minivan</option><option value="wagon">Wagon</option><option value="coupe">Coupe</option></select></label>
+    <label>Min reliability (1-5)<input name="min_reliability" type="number" value="3.5" min="1" max="5" step="0.1"></label>
+    <label>Oldest car (years)<input name="max_age_years" type="number" value="10" min="1" max="20"></label>
+    <button class="primary">Find cars</button>
+  </form>
+  <div id="budget-summary" class="card hidden"></div>
+  <div id="budget-results" class="results"></div>
+</section>
+
+<!-- GRADE -->
+<section id="tab-grade" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <h2>Paste a listing <span class="muted small">(needs the full app)</span></h2>
+      <p class="muted">This static demo runs entirely in your browser with no server and no API key, so the AI features are off: parsing a pasted listing or screenshot, the chat assistant that searches the web, checks NHTSA recalls and researches cars not in the table.</p>
+      <p class="muted">To get them, run the full app locally from the <a href="https://github.com/berdakh/carscout">GitHub repo</a> with your own Anthropic key. Everything on this page, the budget search, grader, financing math and guide, works here exactly as it does there.</p>
+    </div>
+
+    <form id="manual-form" class="card">
+      <h2>Or enter it by hand <span class="muted small">(no AI key needed)</span></h2>
+      <div class="form-grid compact">
+        <label>Year<input name="year" type="number" value="2018" required></label>
+        <label>Make<input name="make" value="Toyota" required></label>
+        <label>Model<input name="model" value="Camry" required></label>
+        <label>Trim<input name="trim" placeholder="SE"></label>
+        <label>Asking price ($)<input name="price" type="number" value="17500" required></label>
+        <label>Mileage<input name="mileage" type="number" value="72000"></label>
+        <label>Seller<select name="seller_type"><option value="dealer">Dealer</option><option value="private">Private / Facebook / Craigslist</option><option value="online_retailer">Carvana / CarMax</option><option value="auction">Auction</option><option value="unknown">Unknown</option></select></label>
+        <label>Title<select name="title_status"><option>clean</option><option>rebuilt</option><option>salvage</option><option>lemon</option><option>unknown</option></select></label>
+        <label>Down ($)<input name="down_payment" type="number" value="2000"></label>
+        <label>Months<input name="term_months" type="number" value="60"></label>
+        <label>Credit<select name="credit_tier"><option value="super_prime">Excellent</option><option value="prime" selected>Good</option><option value="nonprime">Fair</option><option value="subprime">Poor</option></select></label>
+        <label>Driver age<input name="driver_age" type="number" value="30"></label>
+      </div>
+      <button class="primary">Grade it</button>
+    </form>
+  </div>
+  <div id="grade-result"></div>
+</section>
+
+
+<!-- GUIDE -->
+<section id="tab-guide" class="panel">
+  <div class="guide">
+    <article class="card">
+      <h2>The 10-step playbook</h2>
+      <ol>
+        <li><b>Set the real budget.</b> The payment is half the story. Add insurance, fuel, and about $40 to $70 a month for repairs. Use tab 1.</li>
+        <li><b>Pick two or three models</b>, not one. Boring and common is good: parts are cheap and mechanics know them.</li>
+        <li><b>Shop every channel.</b> Dealer sites and Autotrader for selection, Facebook Marketplace and Craigslist for price, Carvana and CarMax for a 7-day return. Tab 2 shows the typical price gap.</li>
+        <li><b>Get the VIN before you drive anywhere.</b> Run a free NHTSA recall check and spend $25 to $45 on a Carfax or AutoCheck report. A seller who will not share the VIN is done.</li>
+        <li><b>Grade the listing.</b> Compare to market, read the red flags, decide your walk-away price before you go.</li>
+        <li><b>Inspect and test drive</b> (checklist below). Cold start only. Bring a friend.</li>
+        <li><b>Pay for a pre-purchase inspection</b> at an independent shop, $100 to $200. It pays for itself the first time it finds a $1,500 problem.</li>
+        <li><b>Negotiate from facts.</b> Start at the suggested offer, name the issues the inspection found, and be ready to leave.</li>
+        <li><b>Arrange financing first.</b> Get pre-approved at a credit union, then let the dealer try to beat it. Never shop by monthly payment alone; ask the total price.</li>
+        <li><b>Paperwork.</b> Title in the seller's name, matching VIN, odometer statement, bill of sale, lien release if there was a loan. Meet at a bank or DMV for private sales.</li>
+      </ol>
+    </article>
+    <article class="card">
+      <h2>Inspection checklist</h2>
+      <ul class="check">
+        <li>Cold start: no rattles, smoke, or warning lights.</li>
+        <li>Oil: level and color. Milky means coolant mixing, walk away.</li>
+        <li>Coolant: not rusty or oily.</li>
+        <li>Tires: even wear, same brand, date code under 6 years.</li>
+        <li>Brakes: no pulsing or pulling, listen for grinding.</li>
+        <li>Transmission: smooth shifts, no slipping or shuddering, test reverse.</li>
+        <li>Steering: no wandering, clunks over bumps, or vibration at 60 mph.</li>
+        <li>Body: panel gaps, paint texture differences, overspray on trim, mismatched bolts under the hood mean collision repair.</li>
+        <li>Frame rails and rocker panels: rust, fresh undercoating hides it.</li>
+        <li>Water: musty smell, damp carpet, silt under the seats or in the trunk mean flood.</li>
+        <li>Electronics: every window, lock, light, AC on max, heat, infotainment, cameras.</li>
+        <li>Check engine light: if it is off but the dash does not show it during the key-on bulb check, it has been disabled.</li>
+      </ul>
+    </article>
+    <article class="card">
+      <h2>Red flags and scams</h2>
+      <ul class="check">
+        <li>Price far below market with a story (military deployment, divorce, moving abroad).</li>
+        <li>Asks for a deposit before you see the car, or payment by gift card, wire, or crypto.</li>
+        <li>"Title coming" or title in another person's name. Curbstoners flip cars without registering them.</li>
+        <li>No test drive, no inspection, "sold as-is, no exceptions" from a private seller.</li>
+        <li>Odometer lower than the history report, or mileage that does not match the pedal and wheel wear.</li>
+        <li>Fresh undercoating, new carpet in an old car, or a single repainted panel.</li>
+        <li>Seller will not meet at a bank, police station, or DMV.</li>
+      </ul>
+    </article>
+    <article class="card">
+      <h2>Channels, in plain terms</h2>
+      <table class="table">
+        <tr><th>Where</th><th>Typical price</th><th>Good for</th><th>Risk</th></tr>
+        <tr><td>Certified pre-owned</td><td>Highest</td><td>Warranty, peace of mind</td><td>Paying for the badge</td></tr>
+        <tr><td>Dealer</td><td>Baseline</td><td>Selection, financing, trade-in</td><td>Fees, add-ons, pressure</td></tr>
+        <tr><td>Carvana / CarMax</td><td>Slightly above</td><td>No haggling, 7-day return</td><td>Cannot see the car first</td></tr>
+        <tr><td>Private party</td><td>10-15% below</td><td>Best price on clean cars</td><td>No recourse, payment safety</td></tr>
+        <tr><td>Facebook Marketplace</td><td>12-15% below</td><td>Local deals</td><td>Scams, curbstoners</td></tr>
+        <tr><td>Auction</td><td>30% below plus fees</td><td>Experienced buyers</td><td>As-is, no drive, salvage titles</td></tr>
+      </table>
+    </article>
+  </div>
+</section>
+</main>
+<footer class="muted small"><a href="https://github.com/berdakh/carscout">Source on GitHub</a> · Estimates use national averages and a seed table, not live quotes. Prices vary by region. Not financial advice.</footer>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
