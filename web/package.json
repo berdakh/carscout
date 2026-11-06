@@ -1,0 +1,15 @@
+{
+  "name": "carscout-web-sdk",
+  "private": true,
+  "description": "Builds docs/vendor/ai-sdks.js, a browser bundle of the official Anthropic and OpenAI JavaScript SDKs for the static site.",
+  "scripts": {
+    "build": "esbuild sdk-entry.js --bundle --minify --format=iife --global-name=AISDK --target=es2020 --outfile=../docs/vendor/ai-sdks.js --legal-comments=external"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0",
+    "openai": "7.53.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

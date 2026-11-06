@@ -49,3 +49,32 @@ button.primary:disabled{opacity:.6;cursor:wait}
 .guide ol,.guide ul{padding-left:20px;margin:0}.guide li{margin:6px 0}
 footer{text-align:center;padding:20px}
 .err{color:var(--bad)}
+.top-right{display:flex;align-items:center;gap:12px}
+button.ghost{background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+button.ghost:hover{border-color:var(--accent)}
+button.small,.small button{padding:6px 10px;font-size:13px}
+.pill{display:inline-block;min-width:18px;padding:0 6px;border-radius:999px;background:var(--chip);font-size:11px;margin-left:4px}
+.pill:empty{display:none}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row-between.wrap{flex-wrap:wrap}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.notice{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--info);padding:10px 12px;border-radius:8px;font-size:13px}
+.span2{grid-column:span 2}
+.loc{max-width:360px;margin-top:10px}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0;display:flex;flex-direction:column;gap:10px}
+legend{padding:0 6px;font-weight:600}
+.radio{flex-direction:row;align-items:center;gap:8px;color:var(--text);font-size:15px}
+.radio input{width:auto}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .t{font-weight:600}
+.item a{color:var(--accent)}
+.status-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--chip)}
+.s-price_drop{background:var(--ok);color:#fff}.s-price_up{background:var(--warn);color:#fff}.s-gone{background:var(--bad);color:#fff}
+.msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin:0}.msg.bot ul,.msg.bot ol{margin:4px 0 8px;padding-left:20px}
+.msg.bot{white-space:normal}.msg.bot a{color:var(--accent)}
+.msg.bot h3,.msg.bot h4{margin:8px 0 4px;font-size:15px}
+.msg.bot code{background:var(--chip);padding:0 4px;border-radius:4px}
+a{color:var(--accent)}
+@media (max-width:600px){.inline-fields{grid-template-columns:1fr 1fr}.span2{grid-column:auto}.tag{display:none}.top{flex-wrap:wrap;gap:8px}}
+.btn-row select{width:auto}

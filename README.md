@@ -1,111 +1,114 @@
 # CarScout
 
-An AI research assistant for first-time used-car buyers. It answers four questions:
+An AI research assistant for first-time used-car buyers. Live at **https://berdakh.github.io/carscout/**.
 
-1. **What can I afford?** Enter a monthly payment, down payment, loan length and rough credit. It reverses that into a maximum price, then lists cars that fit, ranked by *total* monthly cost (loan + fuel + insurance estimate + typical repairs), not sticker price.
-2. **Is this listing a good deal?** Paste the text of a Facebook Marketplace, Craigslist, Autotrader or dealer listing (or a screenshot). It extracts the details, compares the asking price to the expected price for that kind of seller, flags red flags and known problems for that model, suggests an opening offer, and shows what the same car typically costs at a dealer, from a private seller, on Facebook, and at auction.
-3. **Ask anything.** A conversational agent that can search the web, read pages, check NHTSA recalls and complaints, pull EPA fuel economy, run the budget search and grade listings.
-4. **How do I actually buy a car?** A built-in playbook: inspection checklist, scams, paperwork, negotiation, channel comparison.
+- **Budget search.** Enter a monthly payment, down payment, loan length and rough credit. It works out the maximum price you can pay, then lists cars that fit, ranked by *total* monthly cost (loan + fuel + insurance estimate + typical repairs).
+- **Deal grader.** Paste a Facebook Marketplace, Craigslist, Autotrader or dealer listing, or a screenshot. The AI extracts the details; the grader compares the price to what that kind of seller usually asks, flags red flags and known problems, suggests an opening offer, and shows what the same car costs at a dealer, privately, on Facebook and at auction.
+- **Ask CarScout.** Chat with Claude or ChatGPT, using your own API key. It searches the web, checks NHTSA recalls, decodes VINs, runs the budget search, grades listings, and reads your watchlist and daily report.
+- **Watchlist.** Save searches and listings. "Analyze with AI" ranks them and tells you the next step.
+- **Daily report.** A GitHub Actions job scans your watchlist every day: price drops, sold listings, new recalls, and live local prices for the top picks of each saved search. The report shows up on the site.
+- **Buyer's guide.** Inspection checklist, scams, paperwork, negotiation, channel comparison.
 
-## Design decision: no paid data APIs
+Everything runs as a static site on GitHub Pages. There is no server to host and no paid data feed; the only cost is your own AI usage.
 
-There is no listings feed. Instead:
+## Setup
 
-| Need | Source | Cost |
+### 1. Use it with AI (two minutes)
+
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com) (Claude) or [platform.openai.com](https://platform.openai.com) (ChatGPT). You can add both and switch.
+2. Open the site, click **Settings**, paste the key, pick a model, press **Test connection**, then **Save settings**.
+
+The key is stored only in your browser's localStorage and is sent only to the provider you picked. Anyone using the same browser profile can use it, so set it up on your own device and set a monthly spend limit in the provider's console. Without a key, the budget search, manual grading, financing math and guide all still work.
+
+### 2. Turn on the daily scan (ten minutes)
+
+The scan runs in GitHub Actions (`.github/workflows/daily-scan.yml`) every day at 12:23 UTC, reads `docs/data/watchlist.json`, and commits a report to `docs/reports/`, which the site's **Daily report** tab shows.
+
+1. **Give the scan an AI key.** Repository Settings → Secrets and variables → Actions → *New repository secret*: `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY`. Optional *variables*: `SCAN_PROVIDER` (`anthropic` or `openai`) and `SCAN_MODEL` (for example `claude-sonnet-5-5`). Without a key the scan still runs the free checks: recalls, whether listing pages still exist, and re-grading.
+2. **Let the site save your watchlist to the repo.** Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with access to *only this repository* and the permissions **Contents: Read and write** and **Actions: Read and write**. Paste it in the site's Settings under *Daily scan*. From then on every change to your watchlist is saved to the repo, and **Run scan now** on the Daily report tab starts a scan immediately.
+   No token? Use **Download JSON** on the Watchlist tab and commit the file as `docs/data/watchlist.json`.
+3. Save a search or a listing (with its URL), then press **Run scan now** or wait for the schedule. The report appears a few minutes after the run finishes.
+
+To change the time, edit the `cron` line in the workflow (it is in UTC).
+
+### What the scan does
+
+| Check | Needs AI key | What you see |
 |---|---|---|
-| Which cars fit a budget | `data/seed_cars.json`, 69 popular models with price-by-age, reliability, repair cost, insurance tier, mpg, known issues | free, refresh with `scripts/build_seed.py` |
-| Market price of a specific car | seed table + live web search of CarGurus / Edmunds / KBB / iSeeCars pages by the agent | free |
-| Recalls, complaints, VIN decode | NHTSA public APIs | free, no key |
-| Fuel economy | fueleconomy.gov | free, no key |
-| Loan math, depreciation, negative equity | `app/services/finance.py`, deterministic | free |
-| APR by credit tier, insurance by class, channel multipliers | `data/rates.json`, editable planning assumptions | free |
-| Web search | Brave or Tavily free tier if you add a key, DuckDuckGo otherwise | free |
-| The model | Anthropic API, `claude-opus-5-5` by default | pay per use, a few cents per research run |
+| Listing page still loads | no | "No longer listed" when the page returns 404 |
+| Current asking price on the listing page | yes | Price drop / price up / no change, with the % change |
+| Re-grade at today's price | no | Verdict and suggested offer |
+| NHTSA recalls for each saved car | no | New recalls since the last scan |
+| Live local prices for each saved search's top 3 picks | yes | Price range, trend, up to 3 real listings with links, sources |
+| Short written digest | yes | "Act today" summary at the top |
 
-Facebook Marketplace and Craigslist cannot be fetched by a bot. The app generates nothing from them directly; the user pastes the listing text or a screenshot and the AI parses it.
+Facebook Marketplace and Craigslist block automated checks, so listings from those show "Site blocks checks". Dealer sites, Autotrader, Cars.com and CarGurus usually work.
 
-## Live demo on GitHub Pages
+### Cost
 
-The `docs/` folder is a static build of the app that runs entirely in the browser: budget search, listing grader, financing math and the buyer's guide, with no server and no API key. The AI features (chat assistant, paste-a-listing parser, live research) need the Python backend below.
+You pay your AI provider directly. Rough figures per daily scan:
 
-`docs/engine.js` is a line-for-line port of `app/services/{finance,seed,deal}.py`, and `tests/test_static_parity.py` checks that both produce identical numbers. `docs/data/` must be a copy of `data/`; the test fails if they drift. After editing the seed or rates files:
+| Item | Claude Opus 5.5 (default) | Claude Sonnet 5.5 | Notes |
+|---|---|---|---|
+| Each saved search | $0.10 – $0.30 | about half | Web searches plus reading results |
+| Each saved listing with a URL | about $0.02 | about $0.01 | Reads one page |
+| Digest | about $0.01 | less | |
+
+Two saved searches and five listings is roughly $0.30 – $0.70 a day with Opus, $10 – $20 a month. Set `SCAN_MODEL` to `claude-sonnet-5-5` or `gpt-5.4-mini` to cut that. Limits `SCAN_MAX_SEARCHES` (5) and `SCAN_MAX_LISTINGS` (20) cap a runaway watchlist. Chat costs a few cents per question.
+
+### Privacy
+
+The repository is public, so the committed watchlist and the daily reports are public too. They contain the cars and listings you save and the area you set, nothing else. Make the repository private if that matters (GitHub Pages on a private repo needs a paid GitHub plan).
+
+## How it is built
+
+| Part | Where | Notes |
+|---|---|---|
+| Static site | `docs/` | Vanilla JS, no build step. Served by GitHub Pages and by the local server. |
+| Pricing, grading, finance engine | `docs/engine.js`, `app/services/` | Same logic in JS and Python; a test checks they agree. |
+| AI in the browser | `docs/ai.js` | Official Anthropic and OpenAI JS SDKs bundled in `docs/vendor/ai-sdks.js`. Tools run locally; web search runs on the provider. Claude requests use the server-side refusal fallback. |
+| Watchlist and GitHub sync | `docs/store.js` | localStorage, plus the GitHub contents API when a token is set. |
+| Daily scan | `scripts/daily_scan.py`, `app/llm.py` | One interface over Claude and OpenAI. Every check is isolated; failures are listed in the report. |
+| Seed data | `data/seed_cars.json`, `data/rates.json` | 69 models; planning assumptions for APR, insurance and channel prices. Copied to `docs/data/`. |
+| Optional JSON API | `app/main.py` | FastAPI; also serves the site locally. |
+
+Rebuild the SDK bundle after changing SDK versions:
 
 ```bash
-cp data/seed_cars.json data/rates.json docs/data/
+cd web && npm install && npm run build
 ```
 
-To publish: repository Settings → Pages → Source "Deploy from a branch", branch `main`, folder `/docs`. The site appears at `https://<user>.github.io/carscout/`.
-
-## Run it
+## Run locally
 
 ```bash
-cd carscout
-python -m venv .venv && . .venv/bin/activate     # or: uv venv && . .venv/bin/activate
-pip install -e ".[dev]"                           # or: uv pip install -e ".[dev]"
-cp .env.example .env                              # add ANTHROPIC_API_KEY for the AI features
-uvicorn app.main:app --reload
+python -m venv .venv && . .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn app.main:app --reload          # site at http://127.0.0.1:8000
 ```
 
-Open http://127.0.0.1:8000. Budget search, manual grading, the finance calculator and the guide work with no API key at all. The chat assistant and the paste-a-listing parser need `ANTHROPIC_API_KEY`.
+Run the daily scan by hand (put keys in `.env`, see `.env.example`):
 
-Tests (no network, no key):
+```bash
+python scripts/daily_scan.py --dry-run
+```
+
+Tests, all offline:
 
 ```bash
 pytest
 ```
 
-## Project layout
+The suite covers the finance math, budget search, grading, the API, the scan with a fake AI provider, JS/Python parity, and an end-to-end browser test of the site with every external API mocked. The browser test needs Node and Playwright and is skipped without them.
 
+After editing `data/seed_cars.json` or `data/rates.json`:
+
+```bash
+cp data/seed_cars.json data/rates.json docs/data/
 ```
-app/
-  main.py              FastAPI routes + serves the frontend
-  config.py            settings from .env (all optional)
-  agent/
-    agent.py           tool-runner loop for chat; structured-output listing parser
-    tools.py           the 10 tools the model can call
-    prompts.py         system prompts
-  services/
-    finance.py         amortization, reverse budget, depreciation, total cost of ownership
-    seed.py            seed table lookup, price interpolation, budget search, channel prices
-    deal.py            Listing schema and the deal grader
-    nhtsa.py           VIN decode, recalls, complaints
-    fueleconomy.py     EPA mpg
-    search.py          Brave -> Tavily -> DuckDuckGo chain
-    fetch.py           page fetch to readable text
-data/
-  seed_cars.json       the model table (generated from scripts/_seed_source.py)
-  rates.json           APRs, insurance tiers, channel multipliers, mileage and title adjustments
-frontend/              single-page UI for the full app, vanilla JS, no build step
-docs/                  static GitHub Pages build (engine.js port + copied data), no AI
-scripts/
-  _seed_source.py      compact hand-maintained source for seed_cars.json
-  build_seed.py        research a model with the agent and add/refresh it in the seed table
-tests/                 33 tests covering finance math, seed search, grading, API, agent loop
-```
-
-## API
-
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/health` | AI enabled, model, search provider, seed size |
-| POST | `/api/budget` | `{monthly_payment, down_payment, term_months, credit_tier, driver_age, body_types?, min_reliability?, max_age_years?}` |
-| POST | `/api/grade` | `{listing: {year, make, model, price, mileage?, seller_type?, title_status?, ...}, down_payment?, term_months?, credit_tier?, driver_age?}` |
-| POST | `/api/finance` | `{price, down_payment, term_months, credit_tier|apr_pct, depreciation_yearly_pct, include_schedule}` |
-| POST | `/api/listing/parse` | multipart: `text` and/or `image`, parses with the model then grades (needs key) |
-| POST | `/api/chat` | `{messages:[...]}` full history ending with a user turn; returns `text`, `new_messages` to append, `tool_calls` (needs key) |
-| GET | `/api/vin/{vin}`, `/api/recalls`, `/api/complaints`, `/api/mpg`, `/api/search`, `/api/fetch` | free-data passthroughs |
 
 ## Accuracy, honestly
 
-- Seed prices are approximate national dealer asking prices for 2026, written from general market knowledge. Expect them to be off by 5-10% in either direction, more in high- or low-cost regions. Run `python scripts/build_seed.py --refresh` with a key to replace them with researched numbers and sources.
-- Insurance is a tier-based estimate scaled by driver age. It is for ranking cars against each other, not for budgeting to the dollar. Get a real quote.
+- Seed prices are approximate national dealer asking prices for 2026. Expect them to be off by 5-10%, more in high- or low-cost areas. The AI research and the daily scan use live local data on top of them. `python scripts/build_seed.py --refresh` re-researches the whole table with Claude.
+- Insurance is a tier estimate scaled by driver age, for comparing cars, not budgeting to the dollar. Get a real quote.
 - APRs are tier averages. A credit union pre-approval beats any number here.
-- The grader's verdict thresholds (great under -10%, fair within -3% to +5%, overpriced above +12%) are opinions, tune them in `app/services/deal.py`.
-
-## Roadmap ideas
-
-- Save searches and graded listings (SQLite), with price-drop alerts via re-grading.
-- Region adjustment: ask for a ZIP and scale seed prices with a regional index.
-- Insurance quote hand-off to a comparison site, deep links to Autotrader / Cars.com / CarGurus / Craigslist / Facebook with prefilled filters.
-- Streaming chat responses with visible tool progress.
-- Mobile wrapper once the web flow settles.
+- The AI is told never to invent prices or links and to cite sources, and the scan drops any link that is not a plain web address. Still check a listing yourself before acting on it.

@@ -4,18 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CarScout</title>
+<meta name="description" content="AI used-car research for first-time buyers: budget search, deal grader, Claude or ChatGPT assistant, watchlist with daily scans.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">🚗</span> CarScout <span class="tag">used-car research for first-time buyers</span></div>
-  <div id="status" class="status">loading…</div>
+  <div class="top-right">
+    <div id="status" class="status">loading…</div>
+    <button id="open-settings" class="ghost" aria-label="Settings">⚙ Settings</button>
+  </div>
 </header>
 
 <nav class="tabs" role="tablist">
-  <button class="tab active" data-tab="budget">1 · Budget search</button>
-  <button class="tab" data-tab="grade">2 · Grade a listing</button>
-    <button class="tab" data-tab="guide">3 · Buyer's guide</button>
+  <button class="tab active" data-tab="budget">Budget search</button>
+  <button class="tab" data-tab="grade">Grade a listing</button>
+  <button class="tab" data-tab="chat">Ask CarScout</button>
+  <button class="tab" data-tab="watch">Watchlist <span id="watch-count" class="pill"></span></button>
+  <button class="tab" data-tab="report">Daily report</button>
+  <button class="tab" data-tab="guide">Buyer's guide</button>
 </nav>
 
 <main>
@@ -44,14 +51,24 @@
 <!-- GRADE -->
 <section id="tab-grade" class="panel">
   <div class="two-col">
-    <div class="card">
-      <h2>Paste a listing <span class="muted small">(needs the full app)</span></h2>
-      <p class="muted">This static demo runs entirely in your browser with no server and no API key, so the AI features are off: parsing a pasted listing or screenshot, the chat assistant that searches the web, checks NHTSA recalls and researches cars not in the table.</p>
-      <p class="muted">To get them, run the full app locally from the <a href="https://github.com/berdakh/carscout">GitHub repo</a> with your own Anthropic key. Everything on this page, the budget search, grader, financing math and guide, works here exactly as it does there.</p>
-    </div>
+    <form id="paste-form" class="card">
+      <h2>Paste a listing <span class="muted small" data-ai-label></span></h2>
+      <p class="muted">Copy the text from Facebook Marketplace, Craigslist, Autotrader or a dealer page, or upload a screenshot. The AI pulls out the details and grades it.</p>
+      <textarea name="text" rows="7" placeholder="2017 Honda Civic LX, 82k miles, clean title, one owner, $13,900 OBO. Serious buyers only, cash or Zelle..."></textarea>
+      <label>Listing URL (optional, lets the daily scan track it)<input name="url" type="url" placeholder="https://..."></label>
+      <label class="file">Screenshot (optional) <input type="file" name="image" accept="image/*"></label>
+      <div class="inline-fields">
+        <label>Down ($)<input name="down_payment" type="number" value="2000"></label>
+        <label>Months<input name="term_months" type="number" value="60"></label>
+        <label>Credit<select name="credit_tier"><option value="super_prime">Excellent</option><option value="prime" selected>Good</option><option value="nonprime">Fair</option><option value="subprime">Poor</option></select></label>
+        <label>Age<input name="driver_age" type="number" value="30"></label>
+      </div>
+      <button class="primary" id="paste-btn">Parse and grade with AI</button>
+      <p class="muted small needs-key">Needs a Claude or OpenAI key. <a href="#" data-open-settings>Add one in Settings</a>.</p>
+    </form>
 
     <form id="manual-form" class="card">
-      <h2>Or enter it by hand <span class="muted small">(no AI key needed)</span></h2>
+      <h2>Or enter it by hand <span class="muted small">(no AI needed)</span></h2>
       <div class="form-grid compact">
         <label>Year<input name="year" type="number" value="2018" required></label>
         <label>Make<input name="make" value="Toyota" required></label>
@@ -61,6 +78,7 @@
         <label>Mileage<input name="mileage" type="number" value="72000"></label>
         <label>Seller<select name="seller_type"><option value="dealer">Dealer</option><option value="private">Private / Facebook / Craigslist</option><option value="online_retailer">Carvana / CarMax</option><option value="auction">Auction</option><option value="unknown">Unknown</option></select></label>
         <label>Title<select name="title_status"><option>clean</option><option>rebuilt</option><option>salvage</option><option>lemon</option><option>unknown</option></select></label>
+        <label class="span2">Listing URL (optional)<input name="url" type="url" placeholder="https://..."></label>
         <label>Down ($)<input name="down_payment" type="number" value="2000"></label>
         <label>Months<input name="term_months" type="number" value="60"></label>
         <label>Credit<select name="credit_tier"><option value="super_prime">Excellent</option><option value="prime" selected>Good</option><option value="nonprime">Fair</option><option value="subprime">Poor</option></select></label>
@@ -72,6 +90,55 @@
   <div id="grade-result"></div>
 </section>
 
+<!-- CHAT -->
+<section id="tab-chat" class="panel">
+  <div class="card chat-card">
+    <div class="row-between"><h2>Ask CarScout <span class="muted small" data-ai-label></span></h2><button id="chat-reset" class="ghost small">New conversation</button></div>
+    <p class="muted">The assistant searches the web, checks NHTSA recalls, decodes VINs, runs the budget search, grades listings, and reads your watchlist and daily report. Try: <em>"I can do $300 a month with $1,500 down, I'm 24, I need something good in snow."</em> or <em>"What changed on my watchlist today?"</em></p>
+    <div id="chat-empty" class="notice needs-key">Add a Claude or OpenAI API key in <a href="#" data-open-settings>Settings</a> to use the assistant.</div>
+    <div id="chat-log" class="chat-log" aria-live="polite"></div>
+    <form id="chat-form" class="chat-form">
+      <textarea name="q" rows="2" placeholder="Ask anything about buying a used car…" required></textarea>
+      <button class="primary">Send</button>
+    </form>
+    <div id="chat-tools" class="muted small"></div>
+  </div>
+</section>
+
+<!-- WATCHLIST -->
+<section id="tab-watch" class="panel">
+  <div class="card">
+    <div class="row-between wrap">
+      <h2>Your watchlist</h2>
+      <div class="btn-row">
+        <button id="analyze-btn" class="primary">Analyze with AI</button>
+        <button id="sync-btn" class="ghost">Save to GitHub</button>
+        <button id="pull-btn" class="ghost">Load from GitHub</button>
+        <button id="download-btn" class="ghost">Download JSON</button>
+      </div>
+    </div>
+    <label class="loc">Your area (city or ZIP, used for local prices)<input id="watch-location" placeholder="Austin, TX"></label>
+    <p id="sync-status" class="muted small"></p>
+  </div>
+  <div class="two-col">
+    <div class="card"><h2>Saved searches</h2><div id="watch-searches"></div>
+      <p class="muted small">Save one from the Budget search tab. The daily scan researches live prices for its top three picks.</p></div>
+    <div class="card"><h2>Saved listings</h2><div id="watch-listings"></div>
+      <p class="muted small">Save one from the Grade tab. Add the listing URL so the daily scan can catch price drops and sales.</p></div>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section id="tab-report" class="panel">
+  <div class="card">
+    <div class="row-between wrap">
+      <h2>Daily report</h2>
+      <div class="btn-row"><select id="report-date" aria-label="Report date"></select><button id="scan-now" class="ghost">Run scan now</button></div>
+    </div>
+    <p id="report-meta" class="muted small"></p>
+  </div>
+  <div id="report-body"></div>
+</section>
 
 <!-- GUIDE -->
 <section id="tab-guide" class="panel">
@@ -79,9 +146,9 @@
     <article class="card">
       <h2>The 10-step playbook</h2>
       <ol>
-        <li><b>Set the real budget.</b> The payment is half the story. Add insurance, fuel, and about $40 to $70 a month for repairs. Use tab 1.</li>
+        <li><b>Set the real budget.</b> The payment is half the story. Add insurance, fuel, and about $40 to $70 a month for repairs. Use the Budget search tab.</li>
         <li><b>Pick two or three models</b>, not one. Boring and common is good: parts are cheap and mechanics know them.</li>
-        <li><b>Shop every channel.</b> Dealer sites and Autotrader for selection, Facebook Marketplace and Craigslist for price, Carvana and CarMax for a 7-day return. Tab 2 shows the typical price gap.</li>
+        <li><b>Shop every channel.</b> Dealer sites and Autotrader for selection, Facebook Marketplace and Craigslist for price, Carvana and CarMax for a 7-day return. The grader shows the typical price gap.</li>
         <li><b>Get the VIN before you drive anywhere.</b> Run a free NHTSA recall check and spend $25 to $45 on a Carfax or AutoCheck report. A seller who will not share the VIN is done.</li>
         <li><b>Grade the listing.</b> Compare to market, read the red flags, decide your walk-away price before you go.</li>
         <li><b>Inspect and test drive</b> (checklist below). Cold start only. Bring a friend.</li>
@@ -105,7 +172,7 @@
         <li>Frame rails and rocker panels: rust, fresh undercoating hides it.</li>
         <li>Water: musty smell, damp carpet, silt under the seats or in the trunk mean flood.</li>
         <li>Electronics: every window, lock, light, AC on max, heat, infotainment, cameras.</li>
-        <li>Check engine light: if it is off but the dash does not show it during the key-on bulb check, it has been disabled.</li>
+        <li>Check engine light: if it does not light up during the key-on bulb check, it has been disabled.</li>
       </ul>
     </article>
     <article class="card">
@@ -134,9 +201,52 @@
     </article>
   </div>
 </section>
+
+<!-- SETTINGS -->
+<section id="tab-settings" class="panel">
+  <form id="settings-form" class="card settings">
+    <div class="row-between"><h2>Settings</h2><button type="button" class="ghost small" id="close-settings">Done</button></div>
+    <p class="notice">Keys are stored only in this browser (localStorage) and sent only to the AI provider you choose. Anyone who uses this browser profile can use them, so do this on your own device. Set a monthly spend limit in your provider's console.</p>
+
+    <fieldset><legend>AI provider for chat and listing parsing</legend>
+      <label class="radio"><input type="radio" name="provider" value="anthropic"> Claude (Anthropic)</label>
+      <label class="radio"><input type="radio" name="provider" value="openai"> ChatGPT (OpenAI)</label>
+    </fieldset>
+
+    <div class="two-col">
+      <fieldset><legend>Claude</legend>
+        <label>API key<input name="anthropicKey" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+        <label>Model<select name="anthropicModel"></select></label>
+        <div class="btn-row"><button type="button" class="ghost small" data-test="anthropic">Test connection</button><span class="muted small" data-test-out="anthropic"></span></div>
+        <p class="muted small">Get a key at console.anthropic.com.</p>
+      </fieldset>
+      <fieldset><legend>ChatGPT</legend>
+        <label>API key<input name="openaiKey" type="password" autocomplete="off" placeholder="sk-..."></label>
+        <label>Model<input name="openaiModel" list="openai-models"><datalist id="openai-models"></datalist></label>
+        <div class="btn-row"><button type="button" class="ghost small" data-test="openai">Test connection</button><span class="muted small" data-test-out="openai"></span></div>
+        <p class="muted small">Get a key at platform.openai.com.</p>
+      </fieldset>
+    </div>
+
+    <fieldset><legend>Your area</legend>
+      <label>City or ZIP<input name="location" placeholder="Austin, TX"></label>
+    </fieldset>
+
+    <fieldset><legend>Daily scan (GitHub)</legend>
+      <p class="muted small">The daily scan runs on GitHub Actions and reads your watchlist from this repository. To save the watchlist there and start scans from this page, create a fine-grained token limited to this repository with <b>Contents: read and write</b> and <b>Actions: read and write</b>. The scan's own AI key goes in the repository's Actions secrets, not here. See the README.</p>
+      <label>Repository<input name="githubRepo" placeholder="owner/carscout"></label>
+      <label>GitHub token<input name="githubToken" type="password" autocomplete="off" placeholder="github_pat_..."></label>
+    </fieldset>
+
+    <div class="btn-row"><button class="primary">Save settings</button><button type="button" class="ghost" id="clear-keys">Remove all keys</button><span id="settings-saved" class="muted small"></span></div>
+  </form>
+</section>
 </main>
 <footer class="muted small"><a href="https://github.com/berdakh/carscout">Source on GitHub</a> · Estimates use national averages and a seed table, not live quotes. Prices vary by region. Not financial advice.</footer>
+<script src="vendor/ai-sdks.js"></script>
 <script src="engine.js"></script>
+<script src="ai.js"></script>
+<script src="store.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

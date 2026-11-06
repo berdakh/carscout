@@ -39,7 +39,9 @@ def test_chat_without_key_is_503(monkeypatch):
     assert r.status_code == 503
 
 
-def test_index_serves_frontend():
+def test_site_is_served_from_docs():
     r = client.get("/")
     assert r.status_code == 200
-    assert "CarScout" in r.text
+    assert "CarScout" in r.text and "ai.js" in r.text
+    assert client.get("/data/seed_cars.json").status_code == 200
+    assert client.get("/api/health").json()["ok"] is True  # API routes still win over the static mount

@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app.config import FRONTEND_DIR, settings
+from app.config import DOCS_DIR, settings
 from app.services import deal, finance, fueleconomy, nhtsa, seed
 from app.services import search as search_svc
 from app.services import fetch as fetch_svc
@@ -52,6 +51,7 @@ class ChatRequest(BaseModel):
 @app.get("/api/health")
 def health():
     return {"ok": True, "ai_enabled": settings.ai_enabled, "model": settings.carscout_model,
+            "openai_configured": bool(settings.openai_api_key),
             "seed_models": len(seed.load()), "search_provider": "brave" if settings.brave_api_key
             else "tavily" if settings.tavily_api_key else "duckduckgo"}
 
@@ -147,9 +147,6 @@ async def fetch(url: str):
     return await fetch_svc.fetch_page(url)
 
 
-@app.get("/")
-def index():
-    return FileResponse(FRONTEND_DIR / "index.html")
-
-
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# The same static site that GitHub Pages serves. It talks to Claude or OpenAI from the
+# browser with the user's own key; the JSON routes above stay available for scripts.
+app.mount("/", StaticFiles(directory=DOCS_DIR, html=True), name="site")
