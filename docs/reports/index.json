@@ -1,6 +1,18 @@
 {
  "reports": [
   {
+   "date": "2026-11-10",
+   "highlight": "No changes since the last scan.",
+   "counts": {
+    "listings": 0,
+    "searches": 0,
+    "price_drops": 0,
+    "gone": 0,
+    "new_recalls": 0,
+    "errors": 0
+   }
+  },
+  {
    "date": "2026-11-09",
    "highlight": "No changes since the last scan.",
    "counts": {
