@@ -1,0 +1,23 @@
+{
+ "date": "2026-11-13",
+ "generated_at": "2026-11-13T19:53:05+00:00",
+ "provider": null,
+ "model": null,
+ "location": "",
+ "listings": [],
+ "recalls": [],
+ "searches": [],
+ "errors": [],
+ "highlights": [
+  "No changes since the last scan."
+ ],
+ "digest": null,
+ "counts": {
+  "listings": 0,
+  "searches": 0,
+  "price_drops": 0,
+  "gone": 0,
+  "new_recalls": 0,
+  "errors": 0
+ }
+}
